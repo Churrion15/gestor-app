@@ -1,0 +1,16 @@
+export const primaryColor = '#3498db';
+export const secondaryColor = '#e74c3c';
+export const backgroundColor = '#f4f4f4';
+export const textColorDark = '#333';
+export const textColorLight = '#777';
+export const successColor = '#27ae60';
+export const chartColor1 = '#2980b9';
+export const chartColor2 = '#e74c3c';
+export const chartColor3 = '#f39c12';
+export const chartColor4 = '#16a085';
+export const chartColor5 = '#9b59b6';
+export const chartColor6 = '#34495e';
+export const chartColor7 = '#c0392b';
+export const chartColor8 = '#d35400';
+export const chartColor9 = '#1abc9c';
+export const chartColor10 = '#2c3e50';
