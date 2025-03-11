@@ -1,16 +1,8 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  Modal,
-} from "react-native";
-import { useExpenses } from "../context/ExpenseContext";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, Modal } from 'react-native';
+import { useExpenses } from '../context/ExpenseContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 interface Expense {
   id: string;
@@ -22,9 +14,10 @@ interface Expense {
 
 const ExpensesScreen = () => {
   const { expenses, addExpense, removeExpense, updateExpense } = useExpenses();
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
+  const { colors, theme } = useTheme();
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -93,24 +86,27 @@ const ExpensesScreen = () => {
     );
   };
 
-  const renderExpenseItem = ({ item }: { item: Expense }) => (
-    <View style={styles.expenseItem}>
+  const renderExpenseItem = ({ item }: { item: any }) => (
+    <View style={[styles.expenseItem, { 
+      backgroundColor: colors.card,
+      borderBottomColor: colors.border
+    }]}>
       <View style={styles.expenseInfo}>
-        <Text style={styles.expenseTitle}>{item.title}</Text>
-        <Text style={styles.expenseCategory}>{item.category}</Text>
-        <Text style={styles.expenseDate}>{item.date}</Text>
+        <Text style={[styles.expenseTitle, { color: colors.text }]}>{item.title}</Text>
+        <Text style={[styles.expenseCategory, { color: colors.secondaryText }]}>{item.category}</Text>
+        <Text style={[styles.expenseDate, { color: colors.secondaryText }]}>{item.date}</Text>
       </View>
       <View style={styles.expenseAmount}>
-        <Text style={styles.amountText}>${item.amount.toFixed(2)}</Text>
+        <Text style={[styles.amountText, { color: colors.primary }]}>${item.amount.toFixed(2)}</Text>
       </View>
       <View style={styles.expenseActions}>
-        <TouchableOpacity
+        <TouchableOpacity 
           onPress={() => handleEditExpense(item)}
           style={styles.actionButton}
         >
-          <Ionicons name="pencil" size={20} color="#4CAF50" />
+          <Ionicons name="pencil" size={20} color={colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity 
           onPress={() => handleDeleteExpense(item.id)}
           style={styles.actionButton}
         >
@@ -121,11 +117,11 @@ const ExpensesScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Gastos</Text>
-
-      <TouchableOpacity
-        style={styles.addButton}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Gastos</Text>
+      
+      <TouchableOpacity 
+        style={[styles.addButton, { backgroundColor: colors.primary }]}
         onPress={() => {
           setEditingId(null);
           setModalVisible(true);
@@ -137,10 +133,10 @@ const ExpensesScreen = () => {
 
       <FlatList
         data={expenses}
-        keyExtractor={(item: Expense) => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={renderExpenseItem}
         ListEmptyComponent={
-          <Text style={styles.emptyMessage}>No hay gastos registrados</Text>
+          <Text style={[styles.emptyMessage, { color: colors.secondaryText }]}>No hay gastos registrados</Text>
         }
       />
 
@@ -151,46 +147,66 @@ const ExpensesScreen = () => {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingId ? "Editar Gasto" : "Nuevo Gasto"}
+          <View style={[styles.modalContent, { 
+            backgroundColor: colors.card,
+            shadowColor: theme === 'dark' ? '#000' : '#666'
+          }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {editingId ? 'Editar Gasto' : 'Nuevo Gasto'}
             </Text>
-
+            
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: theme === 'dark' ? '#333' : '#fff'
+              }]}
               placeholder="Título"
+              placeholderTextColor={colors.secondaryText}
               value={title}
               onChangeText={setTitle}
             />
-
+            
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: theme === 'dark' ? '#333' : '#fff'
+              }]}
               placeholder="Monto"
+              placeholderTextColor={colors.secondaryText}
               value={amount}
               onChangeText={setAmount}
               keyboardType="numeric"
             />
-
+            
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: colors.border,
+                color: colors.text,
+                backgroundColor: theme === 'dark' ? '#333' : '#fff'
+              }]}
               placeholder="Categoría"
+              placeholderTextColor={colors.secondaryText}
               value={category}
               onChangeText={setCategory}
             />
-
+            
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton, {
+                  backgroundColor: theme === 'dark' ? '#444' : '#f1f1f1'
+                }]}
                 onPress={() => {
                   setModalVisible(false);
                   if (editingId) setEditingId(null);
                 }}
               >
-                <Text style={styles.buttonText}>Cancelar</Text>
+                <Text style={[styles.buttonText, { color: theme === 'dark' ? '#fff' : '#333' }]}>Cancelar</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
+              
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.saveButton, { backgroundColor: colors.primary }]}
                 onPress={handleSaveExpense}
               >
                 <Text style={styles.buttonText}>Guardar</Text>

@@ -1,48 +1,42 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { VictoryPie } from 'victory-native';
 import { useExpenses } from '../context/ExpenseContext';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const HomeScreen = () => {
-  const { categoriesTotal, expenses, removeExpense } = useExpenses();
+  const { categoriesTotal } = useExpenses();
   const navigation = useNavigation();
+  const { colors, theme } = useTheme();
 
   // Prepare data for the chart
-  const chartData = categoriesTotal.map((item, index) => ({
+  const chartData = categoriesTotal.map((item) => ({
     x: item.category,
     y: item.total
   }));
 
-  // Generate colors for the chart
-  const colorScale = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF9A76', '#88D8B0'];
-
-  const handleDeleteExpense = (id: string) => {
-    Alert.alert(
-      'Eliminar Gasto',
-      '¿Estás seguro de que quieres eliminar este gasto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Eliminar', 
-          onPress: () => removeExpense(id),
-          style: 'destructive'
-        }
-      ]
-    );
-  };
-
-  const handleEditExpense = (expense: any) => {
-    navigation.navigate('Gastos', { expense } as never);
-  };
+  // Generate colors for the chart - using a diverse color palette
+  const colorScale = [
+    '#FF6B6B', // Red
+    '#4ECDC4', // Teal
+    '#9b59b6', // Purple
+    '#F9A826', // Orange
+    '#45B7D1', // Blue
+    '#2ECC71', // Green
+    '#FFC75F', // Yellow
+    '#a55eea', // Violet
+    '#FF9A76', // Salmon
+    '#6C5CE7'  // Indigo
+  ];
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Resumen de Gastos</Text>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Resumen de Gastos</Text>
       
       {chartData.length > 0 ? (
-        <View style={styles.chartContainer}>
+        <View style={[styles.chartContainer, { backgroundColor: colors.card, shadowColor: theme === 'dark' ? '#000' : '#666' }]}>
           <VictoryPie
             data={chartData}
             colorScale={colorScale}
@@ -51,34 +45,34 @@ const HomeScreen = () => {
             padding={50}
             labelRadius={({ innerRadius }: { innerRadius: number }) => (innerRadius || 0) + 30}
             style={{
-              labels: { fontSize: 14, fill: 'black' }
+              labels: { fontSize: 14, fill: colors.text }
             }}
           />
         </View>
       ) : (
-        <View style={styles.emptyChartContainer}>
-          <Text style={styles.emptyText}>No hay gastos registrados</Text>
-          <Text style={styles.emptySubText}>Agrega gastos para ver estadísticas</Text>
+        <View style={[styles.emptyChartContainer, { backgroundColor: colors.card }]}>
+          <Text style={[styles.emptyText, { color: colors.secondaryText }]}>No hay gastos registrados</Text>
+          <Text style={[styles.emptySubText, { color: colors.secondaryText }]}>Agrega gastos para ver estadísticas</Text>
         </View>
       )}
 
-      <View style={styles.categoryList}>
-        <Text style={styles.sectionTitle}>Gastos por Categoría</Text>
+      <View style={[styles.categoryList, { backgroundColor: colors.card }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Gastos por Categoría</Text>
         {categoriesTotal.length > 0 ? (
           categoriesTotal.map((item, index) => (
-            <View key={index} style={styles.categoryItem}>
+            <View key={index} style={[styles.categoryItem, { borderBottomColor: colors.border }]}>
               <View style={[styles.colorIndicator, { backgroundColor: colorScale[index % colorScale.length] }]} />
-              <Text style={styles.categoryName}>{item.category}</Text>
-              <Text style={styles.categoryAmount}>${item.total.toFixed(2)}</Text>
+              <Text style={[styles.categoryName, { color: colors.text }]}>{item.category}</Text>
+              <Text style={[styles.categoryAmount, { color: colors.primary }]}>${item.total.toFixed(2)}</Text>
             </View>
           ))
         ) : (
-          <Text style={styles.noCategoriesText}>Sin categorías</Text>
+          <Text style={[styles.noCategoriesText, { color: colors.secondaryText }]}>Sin categorías</Text>
         )}
       </View>
 
       <TouchableOpacity 
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: colors.primary }]}
         onPress={() => navigation.navigate('Gastos' as never)}
       >
         <Ionicons name="add" size={30} color="white" />
@@ -86,6 +80,8 @@ const HomeScreen = () => {
     </ScrollView>
   );
 };
+
+// Keep your existing styles, they'll be overridden by the inline styles we added
 
 const styles = StyleSheet.create({
   container: {
