@@ -1,7 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Category } from "../db/database";
-import { categoryItemStyles as styles } from "../constants/Styles"; 
+
+// Define Category interface locally instead of importing from database
+interface Category {
+  name: string;
+  id?: string;
+}
 
 interface CategoryItemProps {
   category: Category;
@@ -19,31 +23,30 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, color }) => {
   );
 };
 
-const categoryItemStyles = StyleSheet.create({
-  // Estilos locales para CategoryItem -  (¡Opcional! Podrías usar `constants/Styles.ts` también)
+const styles = StyleSheet.create({
   categoryItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8, // Espacio entre items de categoría
+    marginBottom: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: "white", // Fondo blanco para cada item
+    backgroundColor: "white",
     borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2, // Sombra para Android
+    elevation: 2,
   },
   categoryColorIndicator: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: 10, // Espacio entre el indicador de color y el texto
+    marginRight: 10,
   },
   categoryName: {
     fontSize: 16,
-    color: "#444", // Color del texto del nombre de categoría
+    color: "#444",
     marginRight: 5,
   },
 });

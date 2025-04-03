@@ -6,13 +6,15 @@ interface ExpenseItemProps {
   title: string;
   amount: number;
   category: string;
+  description?: string; // Añadir descripción como opcional
   date: string;
 }
 
-const ExpenseItem = ({ title, amount, category, date }: ExpenseItemProps) => {
+const ExpenseItem = ({ title, amount, category, date, description }: ExpenseItemProps) => {
   return (
     <View style={styles.item}>
       <Text style={styles.title}>{title}</Text>
+      {description && <Text style={styles.description}>{description}</Text>}
       <Text style={styles.amount}>${amount.toFixed(2)}</Text>
       <Text style={styles.category}>{category}</Text>
       <Text style={styles.date}>{date}</Text>
@@ -49,6 +51,13 @@ const styles = StyleSheet.create({
     fontSize: 12, 
     color: '#95a5a6',
     marginTop: 5
+  },
+  description: {
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 6,
+    fontStyle: 'italic',
+    color: '#666',
   },
 });
 

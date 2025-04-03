@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-interface Expense {
+// Exportar la interfaz Expense explícitamente
+export interface Expense {
   id: string;
   title: string;
   amount: number;
   category: string;
+  description: string;
   date: string;
 }
 

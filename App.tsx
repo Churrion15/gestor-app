@@ -8,6 +8,8 @@ import SettingsScreen from './screens/SettingsScreen';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 import { StatusBar } from 'react-native';
+import StatsScreen from './screens/StatsScreen';
+import { Platform } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -29,20 +31,24 @@ const AppContent = () => {
 
   return (
     <>
-      <StatusBar 
-        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} 
-        backgroundColor={colors.background}
-      />
+      {Platform.OS !== 'web' && (
+        <StatusBar 
+          barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} 
+          backgroundColor={colors.background}
+        />
+      )}
       <NavigationContainer theme={navigationTheme}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
+              let iconName: keyof typeof Ionicons.glyphMap = 'home';
 
               if (route.name === 'Home') {
                 iconName = focused ? 'home' : 'home-outline';
               } else if (route.name === 'Gastos') {
                 iconName = focused ? 'cash' : 'cash-outline';
+              } else if (route.name === 'Estadísticas') {
+                iconName = focused ? 'bar-chart' : 'bar-chart-outline';
               } else if (route.name === 'Configuración') {
                 iconName = focused ? 'settings' : 'settings-outline';
               }
@@ -57,14 +63,13 @@ const AppContent = () => {
             },
             headerStyle: {
               backgroundColor: colors.card,
-              borderBottomColor: colors.border,
-              borderBottomWidth: 1,
             },
             headerTintColor: colors.text,
           })}
         >
           <Tab.Screen name="Home" component={HomeScreen} />
           <Tab.Screen name="Gastos" component={ExpensesScreen} />
+          <Tab.Screen name="Estadísticas" component={StatsScreen} />
           <Tab.Screen name="Configuración" component={SettingsScreen} />
         </Tab.Navigator>
       </NavigationContainer>

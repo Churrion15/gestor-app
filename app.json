@@ -33,14 +33,22 @@
     "ios": {
       "supportsTablet": true
     },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "backgroundColor": "#ffffff",
+      "themeColor": "#8e44ad",
+      "description": "Aplicación de gestión de gastos",
+      "lang": "es",
+      "name": "Gestor de Gastos"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      },
+      "package": "com.yourcompany.gestorapp",
+      "versionCode": 1,
+      "permissions": []
     }
   }
 }
