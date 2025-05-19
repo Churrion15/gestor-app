@@ -68,8 +68,4 @@ Autenticación de usuarios.
 
 Pruebas automatizadas.
 
-Publicación en App Store / Play Store (si aplica).
-
-🧑‍💻 Autor
-Desarrollado por Churrion15.
-Contribuciones, sugerencias y mejoras son bienvenidas.
+Publicación en App Store / Play Store.
