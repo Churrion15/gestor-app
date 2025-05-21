@@ -73,4 +73,4 @@ export const useThemeStyles = () => {
       elevation: 2,
     }
   });
-};
+}

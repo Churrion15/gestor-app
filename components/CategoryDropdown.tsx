@@ -1,143 +1,83 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Modal, Platform } from 'react-native';
-import { Ionicons } from "@expo/vector-icons";
-import { CATEGORIES } from '../constants/categories';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native"; // Text no se usa directamente aquí, podría eliminarse si no hay otros usos.
+import { Picker } from "@react-native-picker/picker";
+import { useTheme } from "../context/ThemeContext";
+
+// Revertido: Lista de categorías definida aquí
+const categories = [
+  "Todas las categorias",
+  "Comida",
+  "Transporte",
+  "Ocio",
+  "Hogar",
+  "Salud",
+  "Educación",
+  "Otros",
+];
 
 interface CategoryDropdownProps {
-  value: string;
-  onChange: (category: string) => void;
-  isVisible: boolean;
-  setIsVisible: (visible: boolean) => void;
-  placeholder?: string;
-  theme: string;
-  colors: any;
+  selectedValue: string;
+  onValueChange: (value: string) => void;
 }
 
-export const CategoryDropdown = ({
-  value,
-  onChange,
-  isVisible,
-  setIsVisible,
-  placeholder = "Seleccionar categoría",
-  theme,
-  colors,
-}: CategoryDropdownProps) => {
-  
-  return (
-    <View style={styles.dropdownContainer}>
-      <TouchableOpacity
-        style={[
-          styles.dropdownButton,
-          { backgroundColor: theme === "dark" ? "#333" : "#fff" }
-        ]}
-        onPress={() => setIsVisible(!isVisible)}
-        activeOpacity={0.7}
-      >
-        <Text style={[styles.dropdownButtonText, { color: colors.text }]}>
-          {value || placeholder}
-        </Text>
-        <Ionicons
-          name={isVisible ? "chevron-up" : "chevron-down"}
-          size={20}
-          color={colors.text}
-        />
-      </TouchableOpacity>
+export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
+  selectedValue,
+  onValueChange,
+}) => {
+  const { colors, theme } = useTheme(); // Obtenemos 'theme' para la lógica condicional
 
-      <Modal
-        visible={isVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsVisible(false)}
+  // Determinar el color del texto del ítem basado en el tema
+  // Si el tema es oscuro, forzamos el texto a negro para que contraste con un posible fondo blanco del desplegable nativo.
+  // Si el tema es claro, usamos el color de texto normal del tema.
+  const itemTextColor = theme === 'dark' ? '#333333' : colors.text;
+  const placeholderTextColor = theme === 'dark' ? '#666666' : colors.secondaryText;
+
+  return (
+    <View
+      style={[
+        styles.pickerContainer,
+        { borderColor: colors.border, backgroundColor: colors.card }, 
+      ]}
+    >
+      <Picker
+        selectedValue={selectedValue}
+        onValueChange={(itemValue) => onValueChange(itemValue)}
+        style={[styles.picker, { color: colors.text }]} // Color del texto del valor seleccionado (cuando está cerrado)
+        dropdownIconColor={colors.text}
+        mode="dropdown"
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsVisible(false)}
-        >
-          <View 
-            style={[
-              styles.dropdownList,
-              { backgroundColor: theme === "dark" ? "#333" : "#fff" }
-            ]}
-          >
-            <FlatList
-              data={['Todas', ...CATEGORIES]}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.dropdownItem,
-                    value === item && { backgroundColor: colors.primary + '20' }
-                  ]}
-                  onPress={() => {
-                    onChange(item);
-                    setIsVisible(false);
-                  }}
-                >
-                  <Text style={[styles.dropdownItemText, { color: colors.text }]}>
-                    {item === 'Todas' ? 'Todas las categorías' : item}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              style={styles.dropdownScroll}
-              showsVerticalScrollIndicator={true}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        {/* Placeholder Item */}
+        <Picker.Item
+          label="Selecciona una categoría..."
+          value=""
+          color={placeholderTextColor} // Usar el color de placeholder condicional
+          // Se elimina style={{ backgroundColor: colors.card }} porque no afecta el menú desplegable
+        />
+        {/* Mapea la lista interna 'categories' */}
+        {categories.map((category) => (
+          <Picker.Item
+            key={category}
+            label={category}
+            value={category}
+            color={itemTextColor} // Usar el color de ítem condicional
+            // Se elimina style={{ backgroundColor: colors.card }} porque no afecta el menú desplegable
+          />
+        ))}
+      </Picker>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  dropdownContainer: {
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
     marginBottom: 15,
-    zIndex: 1000,
-    position: 'relative',
+    height: 50,
+    justifyContent: "center",
   },
-  dropdownButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  dropdownButtonText: {
-    fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 20,
-  },
-  dropdownList: {
-    width: '90%',
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    maxHeight: 300,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  dropdownScroll: {
-    width: '100%',
-  },
-  dropdownItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  dropdownItemText: {
-    fontSize: 16,
+  picker: {
+    height: "100%",
+    width: "100%",
   },
 });

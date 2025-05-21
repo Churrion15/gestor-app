@@ -43,17 +43,33 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const loadExpenses = async () => {
       try {
-        const storedExpenses = await AsyncStorage.getItem("expenses");
-        if (storedExpenses) {
-          setExpenses(JSON.parse(storedExpenses));
+        const storedExpensesJson = await AsyncStorage.getItem("expenses");
+        if (storedExpensesJson !== null) {
+          // Comprobar explícitamente si no es null
+          const parsedData = JSON.parse(storedExpensesJson);
+          if (Array.isArray(parsedData)) {
+            setExpenses(parsedData);
+          } else {
+            // Si los datos parseados no son un array (p.ej., era un string "null" o "{}")
+            console.warn(
+              "Los datos de gastos almacenados no son un array. Reiniciando a vacío.",
+              parsedData
+            );
+            setExpenses([]);
+          }
+        } else {
+          // No hay datos almacenados, inicializar con un array vacío
+          setExpenses([]);
         }
       } catch (error) {
-        console.error("Error loading expenses:", error);
+        // Capturar errores de AsyncStorage.getItem o JSON.parse
+        console.error("Error al cargar los gastos del almacenamiento:", error);
+        setExpenses([]); // Como fallback, usar un array vacío en caso de cualquier error
       }
     };
 
     loadExpenses();
-  }, []);
+  }, []); // El array de dependencias vacío significa que esto se ejecuta una vez al montar
 
   // Save expenses to storage whenever they change
   useEffect(() => {

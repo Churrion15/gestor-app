@@ -5,125 +5,78 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform, // <--- Añade Platform aquí
 } from "react-native";
-import {
-  VictoryPie,
-  VictoryBar,
-  VictoryChart,
-  VictoryAxis,
-  VictoryTheme,
-} from "victory-native";
-import { useExpenses } from "../context/ExpenseContext";
+import { VictoryPie } from "victory-native";
+import { useExpenses } from "../context/ExpenseContext"; // Asegúrate que la ruta sea correcta
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext"; // Asegúrate que la ruta sea correcta
 
 const HomeScreen = () => {
-  const { expenses, categoriesTotal } = useExpenses();
+  // Obtener 'expenses' directamente del contexto
+  const { expenses } = useExpenses();
   const navigation = useNavigation();
-  const { colors, theme } = useTheme();
-  const [timeFilter, setTimeFilter] = React.useState("all"); // 'all', '24h', 'week', 'month', 'year'
+  const { colors, theme } = useTheme(); // Asegúrate que theme esté disponible
 
-  // Filter expenses based on selected time period
-  const filteredExpenses = React.useMemo(() => {
-    const now = new Date();
-
-    switch (timeFilter) {
-      case "24h":
-        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        return expenses.filter(
-          (expense) => new Date(expense.date) >= oneDayAgo
-        );
-
-      case "week":
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        return expenses.filter(
-          (expense) => new Date(expense.date) >= oneWeekAgo
-        );
-
-      case "month":
-        const oneMonthAgo = new Date(
-          now.getFullYear(),
-          now.getMonth() - 1,
-          now.getDate()
-        );
-        return expenses.filter(
-          (expense) => new Date(expense.date) >= oneMonthAgo
-        );
-
-      case "year":
-        const oneYearAgo = new Date(
-          now.getFullYear() - 1,
-          now.getMonth(),
-          now.getDate()
-        );
-        return expenses.filter(
-          (expense) => new Date(expense.date) >= oneYearAgo
-        );
-
-      default:
-        return expenses;
-    }
-  }, [expenses, timeFilter]);
-
-  // Calculate total expenses for filtered data
-  const totalExpenses = filteredExpenses.reduce(
+  // Calcular totalExpenses usando 'expenses' directamente
+  const totalExpenses = expenses.reduce(
     (sum, expense) => sum + expense.amount,
     0
   );
 
-  // Calculate categories total for filtered data
-  const filteredCategoriesTotal = React.useMemo(() => {
-    return filteredExpenses.reduce((acc, expense) => {
-      const existingCategory = acc.find(
-        (item) => item.category === expense.category
-      );
+  // Calcular categoriesTotal usando 'expenses' directamente
+  const categoriesTotal = React.useMemo(() => {
+    return expenses.reduce(
+      (acc: Array<{ category: string; total: number }>, expense) => {
+        const existingCategory = acc.find(
+          (item) => item.category === expense.category
+        );
 
-      if (existingCategory) {
-        existingCategory.total += expense.amount;
-      } else {
-        acc.push({
-          category: expense.category,
-          total: expense.amount,
-        });
-      }
+        if (existingCategory) {
+          existingCategory.total += expense.amount;
+        } else {
+          acc.push({
+            category: expense.category,
+            total: expense.amount,
+          });
+        }
 
-      return acc;
-    }, []);
-  }, [filteredExpenses]);
+        return acc;
+      },
+      [] as Array<{ category: string; total: number }>
+    );
+  }, [expenses]); // Depender solo de 'expenses'
 
-  // Prepare data for the chart
-  const pieChartData = filteredCategoriesTotal.map((item) => ({
+  // Preparar pieChartData usando 'categoriesTotal'
+  const pieChartData = categoriesTotal.map((item) => ({
     x: item.category,
     y: item.total,
   }));
 
-  // Group expenses by month
+  // Group expenses by month (esto puede permanecer si es útil para otras visualizaciones futuras)
   const monthlyExpenses = expenses.reduce((acc, expense) => {
     const date = new Date(expense.date);
     const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
 
-    if (!acc[monthYear]) {
-      acc[monthYear] = 0;
+    if (!(monthYear in acc)) {
+      acc = { ...acc, [monthYear]: 0 };
     }
 
-    acc[monthYear] += expense.amount;
+    acc = {
+      ...acc,
+      [monthYear]: (acc[monthYear as keyof typeof acc] || 0) + expense.amount,
+    };
     return acc;
   }, {});
 
-  // Convert to array for chart
+  // Convert to array for chart (esto puede permanecer si es útil para otras visualizaciones futuras)
   const monthlyData = Object.entries(monthlyExpenses)
     .map(([month, amount]) => ({
       month,
       amount,
     }))
     .slice(-6); // Show last 6 months
-
-  // Prepare data for the chart
-  const chartData = categoriesTotal.map((item) => ({
-    x: item.category,
-    y: item.total,
-  }));
 
   // Generate colors for the chart - using a diverse color palette
   const colorScale = [
@@ -143,116 +96,7 @@ const HomeScreen = () => {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* Time Filter Buttons - Improved styling */}
-      <View style={styles.filterContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              timeFilter === "all" && [
-                styles.activeFilterButton,
-                { backgroundColor: colors.primary },
-              ],
-            ]}
-            onPress={() => setTimeFilter("all")}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                timeFilter === "all" && styles.activeFilterText,
-              ]}
-            >
-              Todos
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              timeFilter === "24h" && [
-                styles.activeFilterButton,
-                { backgroundColor: colors.primary },
-              ],
-            ]}
-            onPress={() => setTimeFilter("24h")}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                timeFilter === "24h" && styles.activeFilterText,
-              ]}
-            >
-              24h
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              timeFilter === "week" && [
-                styles.activeFilterButton,
-                { backgroundColor: colors.primary },
-              ],
-            ]}
-            onPress={() => setTimeFilter("week")}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                timeFilter === "week" && styles.activeFilterText,
-              ]}
-            >
-              Semana
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              timeFilter === "month" && [
-                styles.activeFilterButton,
-                { backgroundColor: colors.primary },
-              ],
-            ]}
-            onPress={() => setTimeFilter("month")}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                timeFilter === "month" && styles.activeFilterText,
-              ]}
-            >
-              Mes
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              timeFilter === "year" && [
-                styles.activeFilterButton,
-                { backgroundColor: colors.primary },
-              ],
-            ]}
-            onPress={() => setTimeFilter("year")}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                timeFilter === "year" && styles.activeFilterText,
-              ]}
-            >
-              Año
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {/* Total Expenses Card - Enhanced styling */}
+      {/* Total Expenses Card - Texto ajustado */}
       <View
         style={[
           styles.totalCard,
@@ -265,9 +109,9 @@ const HomeScreen = () => {
       >
         <View style={styles.totalCardContent}>
           <View>
+            {/* Texto simplificado */}
             <Text style={[styles.totalLabel, { color: colors.secondaryText }]}>
-              Gastos{" "}
-              {timeFilter !== "all" ? "en el período seleccionado" : "Totales"}
+              Gastos Totales
             </Text>
             <Text style={[styles.totalAmount, { color: colors.text }]}>
               ${totalExpenses.toFixed(2)}
@@ -279,18 +123,38 @@ const HomeScreen = () => {
         </View>
       </View>
 
+      {/* Botón de añadir gasto */}
+      <TouchableOpacity
+        style={[styles.addExpenseButton, { backgroundColor: colors.primary }]} // Nuevo estilo
+        onPress={() => navigation.navigate("Gastos" as never)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="add-circle-outline" size={22} color="white" />
+        <Text style={styles.addExpenseButtonText}>Añadir Gasto</Text>
+      </TouchableOpacity>
+
       <Text style={[styles.title, { color: colors.text }]}>
         Resumen de Gastos
       </Text>
 
-      {/* Chart container with improved styling */}
-      {chartData.length > 0 ? (
+      {/* Chart container - Usar pieChartData */}
+      {pieChartData.length > 0 ? (
         <View
           style={[
             styles.chartContainer,
             {
               backgroundColor: colors.card,
-              shadowColor: theme === "dark" ? "#000" : "#666",
+              // Aplicación de sombra específica para web y iOS aquí
+              ...(Platform.OS === "web" && {
+                boxShadow: `0px 4px 8px ${
+                  theme === "dark"
+                    ? "rgba(0,0,0,0.3)"
+                    : "rgba(102,102,102,0.15)"
+                }`, // Ajusta la opacidad si es necesario
+              }),
+              ...(Platform.OS === "ios" && {
+                shadowColor: theme === "dark" ? "#000" : "#666", // Mantener la lógica original para iOS
+              }),
             },
           ]}
         >
@@ -298,21 +162,27 @@ const HomeScreen = () => {
             Distribución por Categorías
           </Text>
           <VictoryPie
-            data={chartData}
+            data={pieChartData} // Usar pieChartData aquí
             colorScale={colorScale}
-            width={300}
-            height={300}
-            padding={50}
-            labelRadius={({ innerRadius }: { innerRadius: number }) =>
-              (innerRadius || 0) + 30
-            }
+            width={320} // Ligeramente más ancho si es posible
+            height={320}
+            innerRadius={75} // <-- Añadido para efecto donut
+            padAngle={1} // <-- Pequeño espacio entre slices
+            padding={{ top: 20, bottom: 60, left: 60, right: 60 }} // Ajustar padding
+            labelRadius={({ innerRadius }) => Number(innerRadius || 0) + 25} // <-- Ajustar radio de etiquetas
+            labels={({ datum }) => `${datum.x}\n($${datum.y.toFixed(2)})`} // Mostrar categoría y monto en dos líneas
             style={{
-              labels: { fontSize: 14, fill: colors.text },
-              parent: { marginTop: -20 },
+              labels: {
+                fontSize: 11, // <-- Reducir tamaño de fuente
+                fill: colors.text,
+                padding: 5, // Añadir padding a las etiquetas
+              },
+              parent: { marginTop: 0 }, // Ajustar margen si es necesario
             }}
           />
         </View>
       ) : (
+        // Contenedor para cuando no hay datos
         <View
           style={[styles.emptyChartContainer, { backgroundColor: colors.card }]}
         >
@@ -325,7 +195,7 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* Category list with improved styling */}
+      {/* Category list - Usar categoriesTotal */}
       <View style={[styles.categoryList, { backgroundColor: colors.card }]}>
         <View style={styles.sectionTitleContainer}>
           <Ionicons name="list" size={20} color={colors.primary} />
@@ -334,8 +204,9 @@ const HomeScreen = () => {
           </Text>
         </View>
 
-        {filteredCategoriesTotal.length > 0 ? (
-          filteredCategoriesTotal.map((item, index) => (
+        {/* Usar categoriesTotal */}
+        {categoriesTotal.length > 0 ? (
+          categoriesTotal.map((item, index) => (
             <View
               key={index}
               style={[
@@ -366,89 +237,54 @@ const HomeScreen = () => {
             </View>
           ))
         ) : (
+          // Texto ajustado para cuando no hay categorías
           <Text
             style={[styles.noCategoriesText, { color: colors.secondaryText }]}
           >
-            Sin gastos en este período
+            Sin gastos registrados
           </Text>
         )}
       </View>
 
-      {/* Improved add button with shadow and animation */}
-      <TouchableOpacity
-        style={[
-          styles.addButton,
-          {
-            backgroundColor: colors.primary,
-            shadowColor: colors.primary,
-          },
-        ]}
-        onPress={() => navigation.navigate("Gastos" as never)}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
+      {/* Botón flotante eliminado de aquí */}
     </ScrollView>
   );
 };
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#f8f9fa", // Color de fondo por defecto
   },
-  // Improved filter styles
-  filterContainer: {
-    marginBottom: 20,
-  },
-  filterScroll: {
-    flexGrow: 0,
-  },
-  filterButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "#f1f1f1",
-    marginRight: 10,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-  activeFilterButton: {
-    backgroundColor: "#9b59b6",
-    elevation: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-  },
-  filterButtonText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#666",
-  },
-  activeFilterText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  // Improved total card
+  // Estilos del total card mejorados
   totalCard: {
     borderRadius: 12,
     padding: 0,
     marginBottom: 25,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 5,
+    // Sombra actualizada
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 5,
+      },
+      android: {
+        elevation: 5,
+      },
+      web: {
+        boxShadow: "0px 3px 5px rgba(0,0,0,0.15)",
+      },
+    }),
   },
   totalCardContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
+    padding: 15, // Padding interno
   },
   totalLabel: {
     fontSize: 14,
@@ -466,7 +302,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  // Improved title
+  // Estilo del título mejorado
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -474,64 +310,96 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 0.5,
   },
-  // Improved chart container
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 15,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 5,
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  // Mejoras a estilos existentes
+  // Estilos del contenedor del gráfico mejorados
   chartContainer: {
     alignItems: "center",
     marginVertical: 20,
-    backgroundColor: "white",
+    // backgroundColor: "white", // Se aplica dinámicamente con colors.card
     borderRadius: 15,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    // shadowColor: "#000", // Se aplica dinámicamente y ahora con Platform.select
+    // Sombra actualizada (la parte del color dinámico se maneja en el componente)
+    ...Platform.select({
+      ios: {
+        // shadowColor se aplicará inline basado en el tema
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        // El color exacto del boxShadow se definirá inline en el componente
+        // Aquí solo definimos la estructura general de la sombra para web
+        // boxShadow: `0px 4px 8px ${theme === "dark" ? "rgba(0,0,0,0.15)" : "rgba(102,102,102,0.15)"}`, // Esto se moverá al JSX
+      },
+    }),
+    minHeight: 350,
   },
   chartTitle: {
-    fontSize: 16,
+    fontSize: 18, // Ligeramente más grande
+    fontWeight: "600",
+    marginBottom: 15, // Más espacio debajo del título
+    textAlign: "center",
+  },
+  // Estilos para el contenedor vacío del gráfico
+  emptyChartContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 20,
+    borderRadius: 15,
+    padding: 30,
+    height: 200, // Altura fija para el placeholder
+    // Sombra actualizada
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: "0px 4px 8px rgba(0,0,0,0.15)",
+      },
+    }),
+  },
+  emptyText: {
+    fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
     textAlign: "center",
   },
-  // Improved category list
+  emptySubText: {
+    fontSize: 14,
+    textAlign: "center",
+    opacity: 0.8,
+  },
+  // Estilos de la lista de categorías mejorados
   categoryList: {
-    backgroundColor: "white",
+    // backgroundColor: "white", // Se aplica dinámicamente con colors.card
     borderRadius: 15,
     padding: 20,
-    marginBottom: 80,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    marginBottom: 80, // Espacio para el botón flotante
+    // Sombra actualizada
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: "0px 4px 8px rgba(0,0,0,0.15)",
+      },
+    }),
   },
   sectionTitleContainer: {
     flexDirection: "row",
@@ -549,8 +417,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderRadius: 6,
-    marginBottom: 2,
+    borderRadius: 6, // Bordes redondeados leves
+    marginBottom: 2, // Pequeño espacio entre items
   },
   colorIndicator: {
     width: 18,
@@ -559,7 +427,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   categoryName: {
-    flex: 1,
+    flex: 1, // Ocupa el espacio disponible
     fontSize: 16,
     fontWeight: "500",
   },
@@ -567,7 +435,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  // Improved add button
+  noCategoriesText: {
+    textAlign: "center",
+    padding: 20,
+    fontSize: 16,
+  },
+  // Estilos del botón de añadir mejorados
+  addExpenseButton: {
+    flexDirection: "row", // Icono y texto en fila
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginTop: 10, // Espacio después de la tarjeta total
+    marginBottom: 25, // Espacio antes del título "Resumen de Gastos"
+    // Sombra actualizada
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
+      },
+    }),
+  },
+  addExpenseButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 8, // Espacio entre icono y texto
+  },
+
+  // Estilos del botón flotante (Eliminados o comentados si prefieres)
+  /*
   addButton: {
     position: "absolute",
     bottom: 25,
@@ -582,7 +489,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
-  // Keep other existing styles
+  */
+
+  // ... rest of existing styles ...
 });
 
 export default HomeScreen;

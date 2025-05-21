@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Modal,
+  // Modal, // MODAL YA NO SE USA AQUÍ
+  Platform, 
 } from "react-native";
 import { useExpenses } from "../context/ExpenseContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
-import { CATEGORIES } from '../constants/categories';
-import { CategoryDropdown } from '../components/CategoryDropdown';
+// import { CATEGORIES } from "../constants/categories"; // Eliminada importación no utilizada
+import { CategoryDropdown } from "../components/CategoryDropdown";
+import { useRoute, useNavigation } from '@react-navigation/native'; // useRoute ya no es necesario para openAddModal
 
 interface Expense {
   id: string;
@@ -22,112 +24,91 @@ interface Expense {
   category: string;
   description: string;
   date: string;
-} 
+}
+
+// type ExpensesScreenRouteProp = import('@react-navigation/native').RouteProp<{ params: { openAddModal?: boolean } }, 'Gastos'>; // YA NO SE NECESITA
+
 
 const ExpensesScreen = () => {
-  const { expenses, addExpense, removeExpense, updateExpense } = useExpenses();
+  const { expenses, addExpense, removeExpense, updateExpense } = useExpenses(); // addExpense y updateExpense ya no se usan directamente aquí
   const { colors, theme } = useTheme();
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("Todas");
-  const [isFilterDropdownVisible, setIsFilterDropdownVisible] = useState(false);
-  const [isModalDropdownVisible, setIsModalDropdownVisible] = useState(false);
+  // ESTADOS DEL FORMULARIO DEL MODAL ELIMINADOS:
+  // const [title, setTitle] = useState("");
+  // const [amount, setAmount] = useState("");
+  // const [category, setCategory] = useState("");
+  // const [editingId, setEditingId] = useState<string | null>(null);
+  // const [modalVisible, setModalVisible] = useState(false);
+  // const [description, setDescription] = useState("");
 
-  // Reset form when not editing
-  // Eliminar este useEffect duplicado
-  useEffect(() => {
-    if (!editingId) {
-      setTitle("");
-      setAmount("");
-      setCategory("");
-    }
-  }, [editingId]);
-  
-  // Mantener solo este useEffect
-  const [description, setDescription] = useState("");
-  
-  useEffect(() => {
-    if (!editingId) {
-      setTitle("");
-      setAmount("");
-      setCategory("");
-      setDescription("");
-    }
-  }, [editingId]);
-  
-  // Modificar handleSaveExpense para incluir la descripción
-  const handleSaveExpense = () => {
-    if (!title || !amount || !category) {
-      Alert.alert("Error", "Por favor completa todos los campos");
-      return;
-    }
-  
-    if (editingId) {
-      // Update existing expense
-      updateExpense(editingId, {
-        title,
-        amount: parseFloat(amount),
-        category,
-        description, // Añadir descripción
-        date: new Date().toLocaleDateString(),
-      });
-      setEditingId(null);
-    } else {
-      // Add new expense
-      addExpense({
-        id: Date.now().toString(),
-        title,
-        amount: parseFloat(amount),
-        category,
-        description, // Añadir descripción
-        date: new Date().toLocaleDateString(),
-      });
-    }
-  
-    // Clear form and close modal
-    setTitle("");
-    setAmount("");
-    setCategory("");
-    setDescription(""); // Limpiar descripción
-    setModalVisible(false);
-  };
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<string>(
+    "Todas las categorias"
+  );
+
+  // const route = useRoute<ExpensesScreenRouteProp>(); // YA NO SE NECESITA
+  const navigation = useNavigation(); 
+
+  // EFECTOS RELACIONADOS CON EL MODAL Y LIMPIEZA DE FORMULARIO ELIMINADOS
+  // useEffect(() => {
+  //   if (route.params?.openAddModal) {
+  //     setEditingId(null); 
+  //     setTitle("");
+  //     setAmount("");
+  //     setCategory(""); 
+  //     setDescription("");
+  //     setModalVisible(true);
+  //     navigation.setParams({ openAddModal: false });
+  //   }
+  // }, [route.params?.openAddModal, navigation]);
+
+  // useEffect(() => {
+  //   if (!editingId) {
+  //   }
+  // }, [editingId]);
+
+  // useEffect(() => {
+  //   if (!editingId && !modalVisible) { 
+  //     setTitle("");
+  //     setAmount("");
+  //     setCategory("");
+  //     setDescription("");
+  //   }
+  // }, [editingId, modalVisible]);
+
+  // handleSaveExpense SE MUEVE A AddExpenseScreen.tsx
+  // const handleSaveExpense = () => { ... };
 
   const handleEditExpense = (expense: Expense) => {
-    setEditingId(expense.id);
-    setTitle(expense.title);
-    setAmount(expense.amount.toString());
-    setCategory(expense.category);
-    setDescription(expense.description || ""); // Añadir esta línea
-    setModalVisible(true);
+    // NAVEGAR A AddExpenseScreen CON EL ID DEL GASTO
+    navigation.navigate('Agregar Gasto', { expenseId: expense.id });
   };
 
   const handleDeleteExpense = (id: string) => {
-    Alert.alert(
-      "Eliminar Gasto",
-      "¿Estás seguro de que quieres eliminar este gasto?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          onPress: () => {
-            // Añadir un pequeño retraso para evitar problemas en web
-            setTimeout(() => {
-              removeExpense(id);
-            }, 100);
+    if (Platform.OS === "web") {
+      // Web-specific implementation
+      if (window.confirm("¿Estás seguro de que quieres eliminar este gasto?")) {
+        removeExpense(id);
+      }
+    } else {
+      // Mobile implementation
+      Alert.alert(
+        "Eliminar Gasto",
+        "¿Estás seguro de que quieres eliminar este gasto?",
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Eliminar",
+            onPress: () => removeExpense(id),
+            style: "destructive",
           },
-          style: "destructive",
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const renderExpenseItem = ({ item }: { item: any }) => (
     <TouchableOpacity
-      onPress={() => handleEditExpense(item)}
+      onPress={() => handleEditExpense(item)} // Esto ahora navega
       style={[
         styles.expenseItem,
         {
@@ -141,14 +122,16 @@ const ExpensesScreen = () => {
         <Text style={[styles.expenseTitle, { color: colors.text }]}>
           {item.title}
         </Text>
-        
+
         {/* Mostrar descripción si existe */}
         {item.description && (
-          <Text style={[styles.expenseDescription, { color: colors.secondaryText }]}>
+          <Text
+            style={[styles.expenseDescription, { color: colors.secondaryText }]}
+          >
             {item.description}
           </Text>
         )}
-        
+
         <View style={styles.categoryContainer}>
           <Ionicons name="pricetag" size={14} color={colors.secondaryText} />
           <Text
@@ -202,7 +185,8 @@ const ExpensesScreen = () => {
       expense.title.toLowerCase().includes(searchLower) ||
       expense.category.toLowerCase().includes(searchLower);
 
-    return selectedFilter === "Todas"
+    // Corregido: Comparar con el valor exacto del item del Picker
+    return selectedFilter === "Todas las categorias"
       ? matchesSearch
       : matchesSearch && expense.category === selectedFilter;
   });
@@ -234,26 +218,14 @@ const ExpensesScreen = () => {
 
       {/* Dropdown para filtros */}
       <CategoryDropdown
-        value={selectedFilter}
-        onChange={setSelectedFilter}
-        isVisible={isFilterDropdownVisible}
-        setIsVisible={setIsFilterDropdownVisible}
-        placeholder="Todas las categorías"
-        theme={theme}
-        colors={colors}
+        // Corregido: Usa selectedValue para el valor y onValueChange para la función
+        selectedValue={selectedFilter}
+        onValueChange={setSelectedFilter}
+        // No necesita props 'theme' ni 'colors'
       />
 
-      <TouchableOpacity
-        style={[styles.addButton, { backgroundColor: colors.primary }]}
-        onPress={() => {
-          setEditingId(null);
-          setModalVisible(true);
-        }}
-      >
-        <Ionicons name="add" size={24} color="white" />
-        <Text style={styles.addButtonText}>Nuevo Gasto</Text>
-      </TouchableOpacity>
-
+      {/* EL BOTÓN DE "NUEVO GASTO" Y EL MODAL SE ELIMINAN DE AQUÍ */}
+      
       <FlatList
         data={filteredExpenses}
         keyExtractor={(item) => item.id}
@@ -267,114 +239,8 @@ const ExpensesScreen = () => {
         }
       />
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {editingId ? "Editar Gasto" : "Nuevo Gasto"}
-            </Text>
-
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderColor: colors.border,
-                  color: colors.text,
-                  backgroundColor: theme === "dark" ? "#333" : "#fff",
-                },
-              ]}
-              placeholder="Título"
-              placeholderTextColor={colors.secondaryText}
-              value={title}
-              onChangeText={setTitle}
-            />
-
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderColor: colors.border,
-                  color: colors.text,
-                  backgroundColor: theme === "dark" ? "#333" : "#fff",
-                },
-              ]}
-              placeholder="Monto"
-              placeholderTextColor={colors.secondaryText}
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-            />
-      
-            {/* Nuevo campo de descripción */}
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderColor: colors.border,
-                  color: colors.text,
-                  backgroundColor: theme === "dark" ? "#333" : "#fff",
-                },
-              ]}
-              placeholder="Descripción (opcional)"
-              placeholderTextColor={colors.secondaryText}
-              value={description}
-              onChangeText={setDescription}
-              multiline={true}
-              numberOfLines={3}
-            />
-
-            <CategoryDropdown
-              value={category}
-              onChange={setCategory}
-              isVisible={isModalDropdownVisible}
-              setIsVisible={setIsModalDropdownVisible}
-              theme={theme}
-              colors={colors}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.cancelButton,
-                  {
-                    backgroundColor: theme === "dark" ? "#444" : "#f1f1f1",
-                  },
-                ]}
-                onPress={() => {
-                  setModalVisible(false);
-                  if (editingId) setEditingId(null);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    { color: theme === "dark" ? "#fff" : "#333" },
-                  ]}
-                >
-                  Cancelar
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.saveButton,
-                  { backgroundColor: colors.primary },
-                ]}
-                onPress={handleSaveExpense}
-              >
-                <Text style={styles.buttonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* MODAL ELIMINADO */}
+      {/* <Modal ... > ... </Modal> */}
     </View>
   );
 };
@@ -406,16 +272,26 @@ const styles = StyleSheet.create({
   },
   expenseItem: {
     flexDirection: "row",
-    backgroundColor: "white",
+    backgroundColor: "white", // Este color será sobrescrito por colors.card
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
     justifyContent: "space-between",
+    // Sombra actualizada
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: "0px 2px 4px rgba(0,0,0,0.1)",
+      },
+    }),
   },
   categoryContainer: {
     flexDirection: "row",
@@ -481,13 +357,24 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 20,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    // Sombra actualizada
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 5,
+      },
+      web: {
+        boxShadow: "0px 2px 4px rgba(0,0,0,0.25)",
+      },
+    }),
     elevation: 5,
   },
   modalTitle: {
@@ -532,11 +419,21 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    // Sombra actualizada
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: "0px 2px 3px rgba(0,0,0,0.1)",
+      },
+    }),
   },
   searchInput: {
     flex: 1,
@@ -549,8 +446,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
     marginBottom: 6,
-    fontStyle: 'italic',
-    color: '#666',
+    fontStyle: "italic",
+    color: "#666",
   },
 });
 

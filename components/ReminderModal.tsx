@@ -23,7 +23,8 @@ const ReminderModal = ({ visible, onClose, onSave, theme, colors }: ReminderModa
       Alert.alert(
         "Campos requeridos",
         "Por favor completa todos los campos",
-        [{ text: "OK" }]
+        // Cambiado:
+        [{ text: "Aceptar" }] 
       );
       return;
     }

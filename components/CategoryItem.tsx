@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTheme } from "../context/ThemeContext"; // Importar useTheme
 
 // Define Category interface locally instead of importing from database
 interface Category {
@@ -9,16 +10,20 @@ interface Category {
 
 interface CategoryItemProps {
   category: Category;
-  color: string;
+  color: string; // El color para el indicador se sigue pasando como prop
 }
 
 const CategoryItem: React.FC<CategoryItemProps> = ({ category, color }) => {
+  const { colors } = useTheme(); // Obtener colores del tema
+
   return (
-    <View style={styles.categoryItem}>
+    // Modificado: Usar colors.card para el fondo
+    <View style={[styles.categoryItem, { backgroundColor: colors.card }]}>
       <View
         style={[styles.categoryColorIndicator, { backgroundColor: color }]}
       />
-      <Text style={styles.categoryName}>{category.name}:</Text>
+      {/* Modificado: Quitar los dos puntos (:) */}
+      <Text style={[styles.categoryName, { color: colors.text }]}>{category.name}</Text>
     </View>
   );
 };
@@ -28,25 +33,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "white",
+    paddingVertical: 10, // Ligeramente más padding vertical
+    paddingHorizontal: 15, // Ligeramente más padding horizontal
     borderRadius: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 }, // Sombra más sutil
+    shadowOpacity: 0.08, // Sombra más sutil
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1, // Elevación sutil
   },
   categoryColorIndicator: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: 10,
+    marginRight: 12, // Un poco más de espacio
   },
   categoryName: {
     fontSize: 16,
-    color: "#444",
+    // color: "#444", // Color ahora viene del tema
     marginRight: 5,
   },
 });
