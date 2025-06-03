@@ -104,7 +104,7 @@ const AddExpenseScreen = () => {
           {
             borderColor: colors.border,
             color: colors.text,
-            backgroundColor: theme === "dark" ? "#333" : "#fff",
+              backgroundColor: theme === "dark" ? "#333" : "#fff",
           },
         ]}
         placeholder="Título"

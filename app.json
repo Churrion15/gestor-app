@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -32,6 +31,11 @@
       "package": "com.yourcompany.gestorapp",
       "versionCode": 1,
       "permissions": []
+    },
+    "extra": {
+      "eas": {
+        "projectId": "61e6be7e-936b-4df1-b6bd-3cb208b1cdd1"
+      }
     }
   }
 }
